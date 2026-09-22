@@ -49,11 +49,11 @@ with aba_cad_lote:
             chassis_novos = []
             chassis_duplicados = []
             
-            for chassi in lista_chassis:
-                if chassi in chassis_existentes or chassi in [c['chassi'] for c in chassis_novos]:
-                    chassis_duplicados.append(chassi)
-                else:
-                    chassis_novos.append(chassi)
+for chassi in lista_chassis:
+    if chassi in chassis_existentes or chassi in chassis_novos:
+        chassis_duplicados.append(chassi)
+    else:
+        chassis_novos.append(chassi)
             
             if chassis_novos:
                 carros_na_ala = df[df['ala'] == ala_nome]
