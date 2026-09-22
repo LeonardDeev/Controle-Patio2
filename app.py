@@ -6,12 +6,12 @@ st.set_page_config(page_title="Controle de Pátio", layout="wide", page_icon="�
 # --- INICIALIZAÇÃO DE DADOS (SIMULAÇÃO / MEMÓRIA) ---
 if "veiculos" not in st.session_state:
     st.session_state["veiculos"] = pd.DataFrame([
-        {"chassi": "CHS001", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - BRANCO", "posicao_fila": 1},
-        {"chassi": "CHS002", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - BRANCO", "posicao_fila": 2},
-        {"chassi": "CHS003", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - BRANCO", "posicao_fila": 3},
-        {"chassi": "CHS004", "modelo": "EX2", "cor": "Branco", "ala": "EX2 - BRANCO", "posicao_fila": 1},
-        {"chassi": "CHS005", "modelo": "EX2", "cor": "Branco", "ala": "EX2 - BRANCO", "posicao_fila": 2},
-        {"chassi": "CHS006", "modelo": "EX5", "cor": "Preto",  "ala": "EX5 - PRETO",  "posicao_fila": 1},
+        {"chassi": "CHS001", "modelo": "EX5", "cor": "BRANCO", "ala": "EX5 - BRANCO", "posicao_fila": 1},
+        {"chassi": "CHS002", "modelo": "EX5", "cor": "BRANCO", "ala": "EX5 - BRANCO", "posicao_fila": 2},
+        {"chassi": "CHS003", "modelo": "EX5", "cor": "BRANCO", "ala": "EX5 - BRANCO", "posicao_fila": 3},
+        {"chassi": "CHS004", "modelo": "EX2", "cor": "BRANCO", "ala": "EX2 - BRANCO", "posicao_fila": 1},
+        {"chassi": "CHS005", "modelo": "EX2", "cor": "BRANCO", "ala": "EX2 - BRANCO", "posicao_fila": 2},
+        {"chassi": "CHS006", "modelo": "EX5", "cor": "PRETO",  "ala": "EX5 - PRETO",  "posicao_fila": 1},
     ])
 
 df = st.session_state["veiculos"]
@@ -49,15 +49,15 @@ with aba_cad_lote:
             chassis_novos = []
             chassis_duplicados = []
             
-for chassi in lista_chassis:
-    if chassi in chassis_existentes or chassi in chassis_novos:
-        chassis_duplicados.append(chassi)
-    else:
-        chassis_novos.append(chassi)
+            for chassi in lista_chassis:
+                if chassi in chassis_existentes or chassi in chassis_novos:
+                    chassis_duplicados.append(chassi)
+                else:
+                    chassis_novos.append(chassi)
             
             if chassis_novos:
                 carros_na_ala = df[df['ala'] == ala_nome]
-                pos_inicial = carros_na_ala['posicao_fila'].max() + 1 if not carros_na_ala.empty else 1
+                pos_inicial = int(carros_na_ala['posicao_fila'].max() + 1) if not carros_na_ala.empty else 1
                 
                 novos_registros = []
                 for i, chassi in enumerate(chassis_novos):
@@ -95,7 +95,7 @@ with aba_cad_ind:
             else:
                 ala_nome = f"{novo_modelo} - {nova_cor}"
                 carros_na_ala = df[df['ala'] == ala_nome]
-                nova_posicao = carros_na_ala['posicao_fila'].max() + 1 if not carros_na_ala.empty else 1
+                nova_posicao = int(carros_na_ala['posicao_fila'].max() + 1) if not carros_na_ala.empty else 1
                 
                 novo_veiculo = {
                     "chassi": novo_chassi,
