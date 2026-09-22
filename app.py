@@ -5,14 +5,13 @@ st.set_page_config(page_title="Controle de Pátio", layout="wide", page_icon="�
 
 # --- INICIALIZAÇÃO DE DADOS (SIMULAÇÃO / MEMÓRIA) ---
 if "veiculos" not in st.session_state:
-    # Dados de exemplo iniciais
     st.session_state["veiculos"] = pd.DataFrame([
-        {"chassi": "CHS001", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - Branco", "posicao_fila": 1},
-        {"chassi": "CHS002", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - Branco", "posicao_fila": 2},
-        {"chassi": "CHS003", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - Branco", "posicao_fila": 3}, # Frente
-        {"chassi": "CHS004", "modelo": "EX2", "cor": "Branco", "ala": "EX2 - Branco", "posicao_fila": 1},
-        {"chassi": "CHS005", "modelo": "EX2", "cor": "Branco", "ala": "EX2 - Branco", "posicao_fila": 2}, # Frente
-        {"chassi": "CHS006", "modelo": "EX5", "cor": "Preto",  "ala": "EX5 - Preto",  "posicao_fila": 1},
+        {"chassi": "CHS001", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - BRANCO", "posicao_fila": 1},
+        {"chassi": "CHS002", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - BRANCO", "posicao_fila": 2},
+        {"chassi": "CHS003", "modelo": "EX5", "cor": "Branco", "ala": "EX5 - BRANCO", "posicao_fila": 3},
+        {"chassi": "CHS004", "modelo": "EX2", "cor": "Branco", "ala": "EX2 - BRANCO", "posicao_fila": 1},
+        {"chassi": "CHS005", "modelo": "EX2", "cor": "Branco", "ala": "EX2 - BRANCO", "posicao_fila": 2},
+        {"chassi": "CHS006", "modelo": "EX5", "cor": "Preto",  "ala": "EX5 - PRETO",  "posicao_fila": 1},
     ])
 
 df = st.session_state["veiculos"]
@@ -22,21 +21,79 @@ st.title("🚗 Sistema de Gestão e Controle de Pátio")
 # --- BARRA LATERAL: ENTRADA / SAÍDA DE VEÍCULOS ---
 st.sidebar.header("⚙️ Operações")
 
-aba_op, aba_cad = st.sidebar.tabs(["Retirar / Mover", "Cadastrar Novo"])
+aba_op, aba_cad_lote, aba_cad_ind = st.sidebar.tabs(["Retirar", "📦 Em Lote", "👤 Unidade"])
 
-with aba_cad:
-    st.subheader("Entrada de Veículo")
-    novo_chassi = st.text_input("Chassi").upper().strip()
-    novo_modelo = st.text_input("Modelo (ex: EX5)").upper().strip()
-    nova_cor = st.text_input("Cor (ex: BRANCO)").capitalize().strip()
+# 1. CADASTRO EM LOTE (MÚLTIPLOS CARROS)
+with aba_cad_lote:
+    st.subheader("Entrada em Lote")
+    st.caption("Cole vários chassis para a mesma combinação de Modelo e Cor.")
     
-    if st.button("➕ Adicionar ao Pátio", use_container_width=True):
+    lote_modelo = st.text_input("Modelo (ex: EX5)", key="lote_mod").upper().strip()
+    lote_cor = st.text_input("Cor (ex: BRANCO)", key="lote_cor").upper().strip()
+    
+    lote_chassis_raw = st.text_area(
+        "Cole os Chassis (um por linha):",
+        placeholder="CHS101\nCHS102\nCHS103\nCHS104",
+        height=180
+    )
+    
+    if st.button("➕ Cadastrar Lote no Pátio", use_container_width=True):
+        if lote_modelo and lote_cor and lote_chassis_raw:
+            # Processa a lista limpando linhas vazias e espaços
+            lista_chassis = [c.strip().upper() for c in lote_chassis_raw.split("\n") if c.strip()]
+            
+            ala_nome = f"{lote_modelo} - {lote_cor}"
+            
+            # Verifica chassis repetidos já existentes
+            chassis_existentes = set(df['chassi'].values)
+            chassis_novos = []
+            chassis_duplicados = []
+            
+            for chassi in lista_chassis:
+                if chassi in chassis_existentes or chassi in [c['chassi'] for c in chassis_novos]:
+                    chassis_duplicados.append(chassi)
+                else:
+                    chassis_novos.append(chassi)
+            
+            if chassis_novos:
+                carros_na_ala = df[df['ala'] == ala_nome]
+                pos_inicial = carros_na_ala['posicao_fila'].max() + 1 if not carros_na_ala.empty else 1
+                
+                novos_registros = []
+                for i, chassi in enumerate(chassis_novos):
+                    novos_registros.append({
+                        "chassi": chassi,
+                        "modelo": lote_modelo,
+                        "cor": lote_cor,
+                        "ala": ala_nome,
+                        "posicao_fila": pos_inicial + i
+                    })
+                
+                st.session_state["veiculos"] = pd.concat([df, pd.DataFrame(novos_registros)], ignore_index=True)
+                st.success(f"✅ {len(chassis_novos)} veículos adicionados à ala **{ala_nome}**!")
+                
+                if chassis_duplicados:
+                    st.warning(f"⚠️ Os seguintes chassis já existiam e foram ignorados: {', '.join(chassis_duplicados)}")
+                
+                st.rerun()
+            else:
+                st.error("Nenhum chassi novo válido para cadastrar.")
+        else:
+            st.warning("Preencha Modelo, Cor e pelo menos um Chassi.")
+
+# 2. CADASTRO INDIVIDUAL
+with aba_cad_ind:
+    st.subheader("Entrada Individual")
+    novo_chassi = st.text_input("Chassi", key="ind_chassi").upper().strip()
+    novo_modelo = st.text_input("Modelo", key="ind_mod").upper().strip()
+    nova_cor = st.text_input("Cor", key="ind_cor").upper().strip()
+    
+    if st.button("➕ Adicionar Veículo", use_container_width=True):
         if novo_chassi and novo_modelo and nova_cor:
             if novo_chassi in df['chassi'].values:
                 st.error("Este chassi já está no pátio!")
             else:
                 ala_nome = f"{novo_modelo} - {nova_cor}"
-                # Posição na fila: coloca no final da fila (frente)
                 carros_na_ala = df[df['ala'] == ala_nome]
                 nova_posicao = carros_na_ala['posicao_fila'].max() + 1 if not carros_na_ala.empty else 1
                 
@@ -53,19 +110,17 @@ with aba_cad:
         else:
             st.warning("Preencha todos os campos.")
 
+# 3. SAÍDA DE VEÍCULOS
 with aba_op:
     st.subheader("Dar Saída do Veículo")
     chassi_saida = st.selectbox("Selecione o Chassi para remover:", [""] + list(df["chassi"].unique()))
     if st.button("🔴 Confirmar Saída", use_container_width=True):
         if chassi_saida:
-            # Reorganizar posições na mesma ala
             veiculo_remover = df[df['chassi'] == chassi_saida].iloc[0]
             ala_remover = veiculo_remover['ala']
             pos_remover = veiculo_remover['posicao_fila']
             
-            # Remove o carro
             df_novo = df[df['chassi'] != chassi_saida].copy()
-            # Ajusta quem estava atrás dele
             df_novo.loc[(df_novo['ala'] == ala_remover) & (df_novo['posicao_fila'] > pos_remover), 'posicao_fila'] -= 1
             
             st.session_state["veiculos"] = df_novo
@@ -78,7 +133,7 @@ tab_visual, tab_manobra, tab_lista = st.tabs(["🗺️ Mapa Visual das Alas", "�
 # 1. VISÃO VISUAL DO PÁTIO
 with tab_visual:
     st.header("Disposição das Alas e Filas")
-    st.info("📌 **Legenda**: Os carros estão dispostos em fileiras. O carro da **direita (maior número)** é o primeiro da fila (está na frente e pode sair livremente). Os da esquerda estão bloqueados.")
+    st.info("📌 **Legenda**: Os carros estão dispostos em fileiras. O carro com a maior posição é o primeiro da fila (está na frente e pode sair livremente).")
     
     alas_existentes = sorted(df["ala"].unique())
     
@@ -92,7 +147,7 @@ with tab_visual:
         cols = st.columns(max(len(carros_ala), 1))
         for idx, (_, carro) in enumerate(carros_ala.iterrows()):
             e_o_ultimo = (idx == len(carros_ala) - 1)
-            status_cor = "#28a745" if e_o_ultimo else "#dc3545" # Verde se livre, vermelho se bloqueado
+            status_cor = "#28a745" if e_o_ultimo else "#dc3545"
             
             with cols[idx]:
                 st.markdown(f"""
@@ -125,7 +180,6 @@ with tab_manobra:
         ala_alvo = carro_alvo["ala"]
         posicao_alvo = carro_alvo["posicao_fila"]
         
-        # Carros na frente dele (posicao_fila maior que a dele na mesma ala)
         carros_na_frente = df[(df["ala"] == ala_alvo) & (df["posicao_fila"] > posicao_alvo)].sort_values("posicao_fila", ascending=False)
         
         col1, col2 = st.columns(2)
