@@ -92,7 +92,7 @@ with tab_visual:
         cols = st.columns(max(len(carros_ala), 1))
         for idx, (_, carro) in enumerate(carros_ala.iterrows()):
             e_o_ultimo = (idx == len(carros_ala) - 1)
-             status_cor = "#28a745" if e_o_ultimo else "#dc3545" # Verde se livre, vermelho se bloqueado
+            status_cor = "#28a745" if e_o_ultimo else "#dc3545" # Verde se livre, vermelho se bloqueado
             
             with cols[idx]:
                 st.markdown(f"""
